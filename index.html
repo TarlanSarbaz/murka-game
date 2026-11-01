@@ -468,7 +468,7 @@ const SPR = {
       goals: { cat: [{ k: 'toy', n: 4, t: 'Поиграть с дразнилкой' }, { k: 'hide', n: 1, t: 'Спрятаться от мамы' }, { k: 'knock', n: 2, t: 'Уронить что-нибудь' }],
                dog: [{ k: 'toy', n: 3, t: 'Поиграть с дразнилкой' }, { k: 'hide', n: 1, t: 'Спрятаться от мамы' }, { k: 'treat', n: 1, t: 'Найти печенье Даяны' }] } },
     { name: 'Вечер', place: 'Комната Амира', tod: 'evening', color: '#2e5aa8', time: 120, room: 3, start: 2920, dogStart: 3500, catStart: 3600, fly: true, litter: true, mamaEvery: [14, 20], mouseEvery: [20, 30],
-      story: { cat: 'Амир в наушниках ничего не слышит. Йода бежит к нему, когда зовут. Залетела муха, а лоток не почищен…', dog: 'Амир зовёт — беги к нему, он даст подсказку. Муха! И что-то Мурка оставила на полу…' },
+      story: { cat: 'Амир в наушниках ничего не слышит. Йода бежит к нему, когда зовут. Залетела муха, а лоток не почищен…', dog: 'Когда Амир зовёт — беги по полу к жёлтой стрелке у его кресла. Муха! И что-то Мурка оставила на полу…' },
       goals: { cat: [{ k: 'tear', n: 1, t: 'Порвать постер Амира' }, { k: 'fly', n: 1, t: 'Поймать муху' }, { k: 'headstun', n: 1, t: 'Прыгнуть Йоде на голову' }],
                dog: [{ k: 'come', n: 2, t: 'Прибежать к Амиру' }, { k: 'fly', n: 1, t: 'Съесть муху' }, { k: 'eatpoop', n: 1, t: 'Съесть… то самое' }] } },
     { name: 'Вечер', place: 'Спальня родителей', tod: 'evening', color: '#9a3b2a', time: 120, room: 4, start: 3860, dogStart: 4500, catStart: 4600, tramp: true, litter: true, mamaEvery: [12, 18], mouseEvery: [20, 30],
@@ -1193,7 +1193,10 @@ const SPR = {
     amirNext -= dt;
     if (amirCall > 0) {
       amirCall -= dt;
-      if (P === dog && Math.abs(dog.x - (SPOTS.amir + 60)) < 70) { amirCall = 0; goal('come'); score += 30; sfx.good(); pop(SPOTS.amir, FLOOR - 230, 'Хороший мальчик! +30', '#2e8b57', true); }
+      if (P === dog && Math.abs(dog.x - (SPOTS.amir + 60)) < 90 && dog.y > FLOOR - 60) {
+        amirCall = 0; goal('come'); score += 30; sfx.good(); pop(SPOTS.amir + 60, FLOOR - 230, 'Хороший мальчик! +30', '#2e8b57', true);
+        for (let i = 0; i < 6; i++) parts.push({ x: SPOTS.amir + 60, y: FLOOR - 120, vx: (Math.random() - .5) * 160, vy: -60 - Math.random() * 140, t: 0, life: 1, c: '#e8536b', r: 6, heart: true });
+      }
     }
     if (amirNext <= 0) {
       amirNext = rnd(16, 24); amirCall = 9; pop(SPOTS.amir, FLOOR - 230, 'Йода, ко мне!', '#2e5aa8', true);
@@ -1340,7 +1343,14 @@ const SPR = {
     rr(ax + 46, FLOOR - 150, 50, 60, 10); sf('#2e5aa8'); box(ax + 56, FLOOR - 90, 36, 50, '#5d4a3a');
     ctx.beginPath(); ctx.moveTo(ax + 50, FLOOR - 135); ctx.lineTo(ax + 10, FLOOR - 118); ctx.lineWidth = 8; ctx.strokeStyle = '#f3c9a5'; ctx.stroke();
     rr(ax + 30, FLOOR - 160, 90, 150, 14); ctx.lineWidth = 3; ctx.strokeStyle = INK; ctx.stroke(); // gaming chair back
-    if (amirCall > 0 && (reduceMotion || Math.floor(stateT * 4) % 2 === 0)) outlined('Йода, ко мне!', ax + 70, FLOOR - 215, 30, '#2e5aa8');
+    if (amirCall > 0) {
+      // where Yoda has to run: a pulsing spot on the floor by Amir's chair and a bouncing arrow
+      const tt = performance.now() / 1000, pulse = reduceMotion ? 1 : 1 + Math.sin(tt * 6) * 0.12;
+      ctx.beginPath(); ctx.ellipse(ax + 60, FLOOR + 2, 70 * pulse, 14 * pulse, 0, 0, 7); ctx.fillStyle = 'rgba(46,90,168,.28)'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#2e5aa8'; ctx.stroke();
+      const ay = FLOOR - 250 - (reduceMotion ? 0 : Math.abs(Math.sin(tt * 4)) * 14);
+      ctx.beginPath(); ctx.moveTo(ax + 60, ay + 30); ctx.lineTo(ax + 40, ay + 6); ctx.lineTo(ax + 50, ay + 6); ctx.lineTo(ax + 50, ay - 14); ctx.lineTo(ax + 70, ay - 14); ctx.lineTo(ax + 70, ay + 6); ctx.lineTo(ax + 80, ay + 6); ctx.closePath(); sf('#f2c14e', 2.5);
+      if (reduceMotion || Math.floor(stateT * 4) % 2 === 0) outlined('Йода, ко мне!', ax + 70, FLOOR - 275, 30, '#2e5aa8');
+    }
     // dog bed, litter box, toilet
     ctx.beginPath(); ctx.ellipse(SPOTS.dogbed, FLOOR - 8, 60, 20, 0, 0, 7); sf('#8a9cd4'); ctx.beginPath(); ctx.ellipse(SPOTS.dogbed, FLOOR - 10, 44, 12, 0, 0, 7); sf('#d8def2', 2);
     box(SPOTS.litter - 40, FLOOR - 26, 80, 26, '#8fb6e0'); ctx.fillStyle = '#d9d2c3'; ctx.fillRect(SPOTS.litter - 36, FLOOR - 22, 72, 10);
@@ -1671,7 +1681,7 @@ const SPR = {
       rr(300, 70, 360, 50, 16); ctx.fillStyle = '#fff4c9'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#b8322a'; ctx.stroke();
       text('Топ-топ… Мама идёт! Прячься!', 480, 104, 32, '#b8322a');
     }
-    if (amirCall > 0 && P === dog) { rr(300, 70, 360, 44, 16); ctx.fillStyle = '#e6eefc'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#2e5aa8'; ctx.stroke(); text('Амир зовёт! Беги к нему: ' + Math.ceil(amirCall), 480, 101, 28, '#2e5aa8'); }
+    if (amirCall > 0 && P === dog) { rr(280, 70, 400, 44, 16); ctx.fillStyle = '#e6eefc'; ctx.fill(); ctx.lineWidth = 3; ctx.strokeStyle = '#2e5aa8'; ctx.stroke(); const dir = P.x < SPOTS.amir + 30 ? '→' : P.x > SPOTS.amir + 90 ? '←' : '↓'; text('Амир зовёт! Беги к жёлтой стрелке ' + dir + '  ' + Math.ceil(amirCall), 480, 101, 27, '#2e5aa8'); }
     // story banner at the start of each room
     if (banner > 0) {
       const a = Math.min(1, banner / 0.6); ctx.globalAlpha = a;
